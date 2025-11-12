@@ -4,7 +4,7 @@ Backend Express.js service with MongoDB for managing users and tasks.
 
 ### Prerequisites
 - Node.js 18+
-- MongoDB (local or hosted)
+- MongoDB Atlas account (database hosted on MongoDB Atlas)
 - Docker (optional, for containerized runs)
 
 ### Environment Variables
@@ -18,7 +18,7 @@ PORT=8000
 
 Notes:
 - Set a strong `JWT_SECRET` in production.
-- Use your MongoDB Atlas connection string if not using local MongoDB.
+- Use your MongoDB Atlas connection string.
 
 ### Install and Run Locally
 PowerShell:
@@ -44,7 +44,16 @@ Build the image:
 docker build -t ai-task-manager-service .
 ```
 
-Run the container:
+**Deployment on Server:**
+
+1. Copy the `.env` file to your server (manually place it in the same directory as the Dockerfile)
+2. Run the container:
+
+```powershell
+docker run -p 8000:8000 --env-file .env ai-task-manager-service
+```
+
+Or if you prefer to pass environment variables directly:
 
 ```powershell
 docker run -p 8000:8000 `
@@ -54,42 +63,13 @@ docker run -p 8000:8000 `
   ai-task-manager-service
 ```
 
-Health check inside the container hits `GET /api/health`.
+**Notes:**
+- The `.env` file must be manually placed on the server before running the container
+- All required configuration is handled through the Dockerfile
+- MongoDB is hosted on MongoDB Atlas, not in a Docker container
+- Make sure your Atlas cluster is accessible and your server's IP is whitelisted in Atlas network access settings
 
-### Docker Compose (local MongoDB example)
-Create a `docker-compose.yml` like:
-
-```yaml
-version: "3.9"
-services:
-  mongo:
-    image: mongo:7
-    restart: unless-stopped
-    volumes:
-      - mongo_data:/data/db
-    ports:
-      - "27017:27017"
-
-  api:
-    image: ai-task-manager-service
-    depends_on:
-      - mongo
-    environment:
-      MONGODB_URI: mongodb://mongo:27017/ai-task-management
-      JWT_SECRET: your-secret
-      PORT: 8000
-    ports:
-      - "8000:8000"
-
-volumes:
-  mongo_data:
-```
-
-Then:
-
-```powershell
-docker compose up -d --build
-```
+Health check: `GET /api/health`
 
 ### Useful Endpoints
 - `GET /api/health` — service status
@@ -98,8 +78,16 @@ docker compose up -d --build
 - `GET /api/tasks` and related task routes
 
 ### Troubleshooting
-- Cannot connect to MongoDB: verify `MONGODB_URI` and that Mongo is reachable from the container (use `host.docker.internal` on Windows/macOS).
+- Cannot connect to MongoDB Atlas: 
+  - Verify your `MONGODB_URI` connection string is correct
+  - Check that your IP address is whitelisted in MongoDB Atlas Network Access settings
+  - Ensure your MongoDB Atlas cluster is running and accessible
+  - For Docker containers, make sure the container can reach MongoDB Atlas (check network settings)
 - Port already in use: change `PORT` or stop the conflicting process.
 - JWT errors: ensure `JWT_SECRET` is set and consistent across instances.
+- MongoDB Atlas connection issues: 
+  - Verify username and password in connection string
+  - Check cluster status in MongoDB Atlas dashboard
+  - Ensure database name in connection string matches your Atlas database
 
 
